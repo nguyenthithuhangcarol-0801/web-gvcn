@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/common/Header';
 import { Sidebar } from './components/common/Sidebar';
@@ -21,7 +21,8 @@ import { ReportsModule } from './components/modules/ReportsModule';
 import { AIAssistantModule } from './components/modules/AIAssistantModule';
 import { UserProfileModule } from './components/modules/UserProfileModule';
 import { AccountManagementModule } from './components/modules/AccountManagementModule';
-import { Settings, Shield, RefreshCw } from 'lucide-react';
+import { LandingLoginPortal } from './components/auth/LandingLoginPortal';
+import { Settings, Shield, RefreshCw, LogOut } from 'lucide-react';
 
 const SettingsModule = () => (
   <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4 max-w-3xl">
@@ -106,16 +107,28 @@ const MainContent = () => {
   );
 };
 
+const AppContainer = () => {
+  const [hasEnteredApp, setHasEnteredApp] = useState(false);
+
+  if (!hasEnteredApp) {
+    return <LandingLoginPortal onEnterApp={() => setHasEnteredApp(true)} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col font-['Inter',sans-serif]">
+      <Header onReturnToPortal={() => setHasEnteredApp(false)} />
+      <div className="flex-1 flex overflow-hidden">
+        <Sidebar />
+        <MainContent />
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   return (
     <AppProvider>
-      <div className="min-h-screen bg-slate-50 flex flex-col font-['Inter',sans-serif]">
-        <Header />
-        <div className="flex-1 flex overflow-hidden">
-          <Sidebar />
-          <MainContent />
-        </div>
-      </div>
+      <AppContainer />
     </AppProvider>
   );
 }
