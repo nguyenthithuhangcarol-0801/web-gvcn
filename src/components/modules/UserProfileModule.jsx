@@ -9,7 +9,7 @@ export const UserProfileModule = () => {
     fullName: userProfile?.full_name || 'Nguyễn Văn A',
     phone: userProfile?.phone_number || '0987654321',
     avatarUrl: userProfile?.avatar_url || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
-    schoolName: userProfile?.school_name || 'Trường THPT Chuyên Nguyễn Du',
+    schoolName: userProfile?.school_name || 'Trường THPT Phạm Phú Thứ',
     className: userProfile?.class_name || '12A9'
   });
 

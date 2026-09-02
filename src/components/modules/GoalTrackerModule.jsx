@@ -176,7 +176,7 @@ export const GoalTrackerModule = () => {
 
           <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-2xs space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-indigo-950">Thầy Nguyễn Quốc Đạt (GVCN)</span>
+              <span className="font-bold text-indigo-950">Giáo Viên Chủ Nhiệm (GVCN)</span>
               <span className="text-[10px] text-slate-400">Vừa xong</span>
             </div>
             <p className="text-xs text-slate-700 italic">

@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
     full_name VARCHAR(150),
     avatar_url TEXT,
     phone_number VARCHAR(30),
-    school_name VARCHAR(150) DEFAULT 'THPT Chuyên Nguyễn Du',
+    school_name VARCHAR(150) DEFAULT 'THPT Phạm Phú Thứ',
     class_name VARCHAR(50) DEFAULT '12A9',
     role VARCHAR(20) DEFAULT 'STUDENT', -- 'ADMIN' | 'TEACHER' | 'STUDENT'
     is_locked BOOLEAN DEFAULT false,

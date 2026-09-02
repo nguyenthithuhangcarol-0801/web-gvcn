@@ -25,10 +25,10 @@ export const AppProvider = ({ children }) => {
   const [supabaseStatus, setSupabaseStatus] = useState({ connected: false, tablesReady: false });
   const [authUser, setAuthUser] = useState(null);
   const [userProfile, setUserProfile] = useState({
-    full_name: 'Nguyễn Quốc Đạt',
+    full_name: 'Giáo Viên Chủ Nhiệm',
     phone_number: '0987654321',
     avatar_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
-    school_name: 'Trường THPT Chuyên Nguyễn Du',
+    school_name: 'Trường THPT Phạm Phú Thứ',
     class_name: '12A9',
     privacy_settings: { hideEmail: false, hideGradeOnLeaderboard: false }
   });

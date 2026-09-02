@@ -506,7 +506,7 @@ export const LandingLoginPortal = ({ onEnterApp }) => {
 
       {/* Footer */}
       <footer className="relative z-10 max-w-5xl mx-auto w-full text-center py-4 border-t border-slate-800 text-xs text-slate-500">
-        <p>© 2026 Class Management System • Trường THPT Chuyên Nguyễn Du</p>
+        <p>© 2026 Class Management System • Trường THPT Phạm Phú Thứ</p>
       </footer>
     </div>
   );

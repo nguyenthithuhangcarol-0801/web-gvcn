@@ -37,7 +37,7 @@ export const AIAssistantModule = () => {
       } else if (textToSend.includes("Viết nhận xét tháng")) {
         aiResponseText = `🤖 **Bản nháp nhận xét tháng 9 cho học sinh Nguyễn Văn A (12A9):**\n\n"Em Nguyễn Văn A có tinh thần rèn luyện tốt, tích cực hỗ trợ lớp (đạt +125 điểm thi đua, đứng top 1). Môn Tiếng Anh xuất sắc (9.0). Tuy nhiên điểm môn Toán gần đây có dấu hiệu giảm nhẹ (từ 7.8 xuống 5.4). Đề nghị em phân bổ lại thời gian ôn tập môn Toán kĩ hơn trong tháng tới."\n\n*(GVCN có thể duyệt & chỉnh sửa trước khi gửi phụ huynh)*`;
       } else if (textToSend.includes("Soạn tin nhắn cho phụ huynh")) {
-        aiResponseText = `🤖 **Mẫu tin nhắn cá nhân hóa gửi Phụ Huynh:**\n\n"Kính gửi Quý Phụ huynh học sinh Lê Văn C (Lớp 12A9). Thầy Nguyễn Quốc Đạt - GVCN xin thông báo: Trong tháng này em C đã nghỉ tổng cộng 7 buổi học (trong đó có 3 buổi chưa gửi đơn xin phép). Nhờ Quý Phụ huynh phối hợp nhắc nhở cháu đảm bảo thời gian đi học đúng giờ. Xin cảm ơn Quý Phụ huynh!"`;
+        aiResponseText = `🤖 **Mẫu tin nhắn cá nhân hóa gửi Phụ Huynh:**\n\n"Kính gửi Quý Phụ huynh học sinh Lê Văn C (Lớp 12A9). Giáo Viên Chủ Nhiệm xin thông báo: Trong tháng này em C đã nghỉ tổng cộng 7 buổi học (trong đó có 3 buổi chưa gửi đơn xin phép). Nhờ Quý Phụ huynh phối hợp nhắc nhở cháu đảm bảo thời gian đi học đúng giờ. Xin cảm ơn Quý Phụ huynh!"`;
       } else {
         aiResponseText = `🤖 Dựa trên dữ liệu tổng hợp của lớp 12A9 (Sĩ số 50, Chuyên cần 97.2%, Top 1 thi đua: Minh Anh), hệ thống ghi nhận tình hình lớp duy trì rất tốt. Thầy có thể yêu cầu tôi soạn báo cáo hoặc tạo nhận xét cụ thể.`;
       }

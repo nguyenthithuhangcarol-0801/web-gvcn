@@ -37,7 +37,7 @@ export const DashboardModule = () => {
               {classInfo.className} – {classInfo.cohort}
             </h2>
             <p className="text-indigo-200 text-sm mt-1">
-              GVCN: <strong className="text-white">{classInfo.gvcnName}</strong> • Trường THPT Chuyên Nguyễn Du
+              GVCN: <strong className="text-white">{classInfo.gvcnName}</strong> • {classInfo.schoolName}
             </p>
           </div>
           <div className="flex items-center gap-2">

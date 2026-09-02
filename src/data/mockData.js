@@ -9,8 +9,8 @@ export const INITIAL_CLASS_INFO = {
   excusedAbsence: 1,
   unexcusedAbsence: 1,
   lateToday: 2,
-  gvcnName: "Thầy Nguyễn Quốc Đạt",
-  schoolName: "Trường THPT Chuyên Nguyễn Du"
+  gvcnName: "Giáo Viên Chủ Nhiệm",
+  schoolName: "Trường THPT Phạm Phú Thứ"
 };
 
 export const INITIAL_STUDENTS = [
@@ -412,7 +412,7 @@ export const INITIAL_CHAT_MESSAGES = [
     id: "M2",
     studentId: "STU_001",
     senderRole: "GVCN",
-    senderName: "Thầy Nguyễn Quốc Đạt (GVCN)",
+    senderName: "Giáo Viên Chủ Nhiệm (GVCN)",
     time: "2026-09-01 18:45",
     content: "Chào anh B! Cháu A học môn Tiếng Anh rất xuất sắc (vừa đạt 9.0 bài kiểm tra). Môn Toán bài vừa rồi có giảm chút do nhầm lẫn tính toán, Thầy đã nhắc nhở cháu ôn tập kĩ hơn ạ."
   }
