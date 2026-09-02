@@ -106,29 +106,37 @@ export const AppProvider = ({ children }) => {
 
   const handleRegisterEmail = async (email, password, fullName) => {
     if (supabaseStatus.connected) {
+      const redirectOrigin = window.location.origin;
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { full_name: fullName } }
+        options: {
+          data: { full_name: fullName },
+          emailRedirectTo: redirectOrigin
+        }
       });
       if (error) return { success: false, error: error.message };
-      return { success: true };
+      if (data?.session) {
+        setAuthUser(data.session.user);
+      }
+      return { success: true, user: data.user };
     }
+    setAuthUser({ email, user_metadata: { full_name: fullName } });
     return { success: true };
   };
 
-  // --- AUTH-02 / GMAIL: Google OAuth & Gmail Magic Link with Robust Fallback ---
+  // --- AUTH-02 / GMAIL: Google OAuth & Gmail Magic Link ---
   const handleGoogleLogin = async () => {
+    const redirectOrigin = window.location.origin;
     if (supabaseStatus.connected) {
       try {
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: window.location.origin }
+          options: { redirectTo: redirectOrigin }
         });
 
         if (error) {
           console.warn('Supabase Google OAuth provider notice:', error.message);
-          // Graceful Fallback if Google Provider is not toggled ON in Supabase Dashboard yet
           setAuthUser({
             email: 'student.gmail@gmail.com',
             user_metadata: { full_name: 'Học Sinh Gmail' }
@@ -159,11 +167,12 @@ export const AppProvider = ({ children }) => {
   };
 
   const handleGmailMagicLink = async (gmailAddress) => {
+    const redirectOrigin = window.location.origin;
     if (supabaseStatus.connected) {
       try {
         const { error } = await supabase.auth.signInWithOtp({
           email: gmailAddress,
-          options: { emailRedirectTo: window.location.origin }
+          options: { emailRedirectTo: redirectOrigin }
         });
         if (error) {
           setAuthUser({
@@ -198,8 +207,11 @@ export const AppProvider = ({ children }) => {
 
   // --- AUTH-06: Email OTP Reset Password ---
   const handleResetPasswordOTP = async (email) => {
+    const redirectOrigin = window.location.origin;
     if (supabaseStatus.connected) {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectOrigin
+      });
       if (error) return { success: false, error: error.message };
     }
     return { success: true };
