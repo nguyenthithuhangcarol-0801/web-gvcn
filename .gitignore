@@ -1,3 +1,7 @@
+# Agent internal folders
+.agent*
+.agent 2
+
 # Logs
 logs
 *.log
