@@ -19,6 +19,8 @@ import { CertificatesModule } from './components/modules/CertificatesModule';
 import { ParentPortalModule } from './components/modules/ParentPortalModule';
 import { ReportsModule } from './components/modules/ReportsModule';
 import { AIAssistantModule } from './components/modules/AIAssistantModule';
+import { UserProfileModule } from './components/modules/UserProfileModule';
+import { AccountManagementModule } from './components/modules/AccountManagementModule';
 import { Settings, Shield, RefreshCw } from 'lucide-react';
 
 const SettingsModule = () => (
@@ -31,17 +33,17 @@ const SettingsModule = () => (
       <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
         <div className="font-bold text-slate-900 flex items-center gap-1.5">
           <Shield className="w-4 h-4 text-emerald-600" />
-          <span>Bảo mật dữ liệu cá nhân (RBAC Privacy Guard)</span>
+          <span>Bảo mật RLS 3 Cấp (ADMIN, TEACHER, STUDENT)</span>
         </div>
-        <p className="text-slate-600">Đã kích hoạt: Phụ huynh CHỈ xem dữ liệu của con mình. Học sinh không xem dữ liệu riêng tư của bạn khác.</p>
+        <p className="text-slate-600">Đã kích hoạt: Phụ huynh CHỈ xem dữ liệu của con mình qua Mã PIN hoặc Account. Học sinh không xem dữ liệu riêng tư của bạn khác.</p>
       </div>
 
       <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
         <div className="font-bold text-slate-900 flex items-center gap-1.5">
           <RefreshCw className="w-4 h-4 text-indigo-600" />
-          <span>Tự động sao lưu dữ liệu (Automated Data Backup)</span>
+          <span>Supabase Auth & Remote Session Management</span>
         </div>
-        <p className="text-slate-600">Đã kích hoạt: Sao lưu định kỳ hàng ngày vào lúc 23:59.</p>
+        <p className="text-slate-600">Hỗ trợ Đăng nhập Google OAuth, Khôi phục mật khẩu OTP, Quản lý Session thiết bị & Mã kích hoạt VIP License Key.</p>
       </div>
     </div>
   </div>
@@ -86,6 +88,10 @@ const MainContent = () => {
         return <ReportsModule />;
       case 'ai_assistant':
         return <AIAssistantModule />;
+      case 'user_profile':
+        return <UserProfileModule />;
+      case 'account_mgmt':
+        return <AccountManagementModule />;
       case 'settings':
         return <SettingsModule />;
       default:

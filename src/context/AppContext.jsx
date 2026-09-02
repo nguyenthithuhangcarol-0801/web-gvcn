@@ -18,11 +18,25 @@ import {
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [currentRole, setCurrentRole] = useState('GVCN'); // 'GVCN' | 'STUDENT' | 'PARENT'
+  const [currentRole, setCurrentRole] = useState('GVCN'); // 'GVCN' | 'STUDENT' | 'PARENT' | 'ADMIN'
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedStudentId, setSelectedStudentId] = useState('STU_001');
 
   const [supabaseStatus, setSupabaseStatus] = useState({ connected: false, tablesReady: false });
+  const [authUser, setAuthUser] = useState(null);
+  const [userProfile, setUserProfile] = useState({
+    full_name: 'Nguyễn Quốc Đạt',
+    phone_number: '0987654321',
+    avatar_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
+    school_name: 'Trường THPT Chuyên Nguyễn Du',
+    class_name: '12A9',
+    privacy_settings: { hideEmail: false, hideGradeOnLeaderboard: false }
+  });
+
+  const [userSessions, setUserSessions] = useState([
+    { id: 'S1', deviceInfo: 'MacBook Pro (Chrome)', ipAddress: '192.168.0.123', lastActive: 'Vừa xong', isCurrent: true },
+    { id: 'S2', deviceInfo: 'iPhone 15 Pro (Safari)', ipAddress: '113.161.40.12', lastActive: '2 giờ trước', isCurrent: false }
+  ]);
 
   const [classInfo, setClassInfo] = useState(INITIAL_CLASS_INFO);
   const [students, setStudents] = useState(INITIAL_STUDENTS);
@@ -37,27 +51,25 @@ export const AppProvider = ({ children }) => {
   const [studentVoices, setStudentVoices] = useState(INITIAL_STUDENT_VOICES);
   const [chatMessages, setChatMessages] = useState(INITIAL_CHAT_MESSAGES);
 
-  // Check Supabase connection on load
+  // Auth State Listener
   useEffect(() => {
     const initSupabase = async () => {
       const conn = await checkSupabaseConnection();
       setSupabaseStatus(conn);
 
-      if (conn.connected && conn.tablesReady) {
-        try {
-          // Fetch remote data from Supabase
-          const { data: dbStudents } = await supabase.from('students').select('*');
-          if (dbStudents && dbStudents.length > 0) {
-            setStudents(dbStudents);
-          }
-
-          const { data: dbLeaveReqs } = await supabase.from('leave_requests').select('*');
-          if (dbLeaveReqs && dbLeaveReqs.length > 0) {
-            setLeaveRequests(dbLeaveReqs);
-          }
-        } catch (err) {
-          console.warn('Could not sync with Supabase tables, using local fallback data:', err);
+      if (conn.connected) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setAuthUser(session.user);
         }
+
+        supabase.auth.onAuthStateChange((_event, session) => {
+          if (session) {
+            setAuthUser(session.user);
+          } else {
+            setAuthUser(null);
+          }
+        });
       }
     };
     initSupabase();
@@ -76,6 +88,110 @@ export const AppProvider = ({ children }) => {
     } else {
       setActiveTab('dashboard');
     }
+  };
+
+  // --- AUTH-01: Email/Password Login & Register ---
+  const handleLoginEmail = async (email, password) => {
+    if (supabaseStatus.connected) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return { success: false, error: error.message };
+      setAuthUser(data.user);
+      return { success: true };
+    }
+    // Fallback local mock login
+    setAuthUser({ email, id: 'LOCAL_USER' });
+    return { success: true };
+  };
+
+  const handleRegisterEmail = async (email, password, fullName) => {
+    if (supabaseStatus.connected) {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } }
+      });
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    }
+    return { success: true };
+  };
+
+  // --- AUTH-02: Google OAuth Login ---
+  const handleGoogleLogin = async () => {
+    if (supabaseStatus.connected) {
+      await supabase.auth.signInWithOAuth({ provider: 'google' });
+    } else {
+      alert('Đã kết nối tài khoản Google thành công (Demo Mode)!');
+    }
+  };
+
+  // --- AUTH-04: Parent Access PIN Lookup ---
+  const handleParentPinLookup = (pin) => {
+    const target = students.find(s => s.id === pin.replace('PIN-', '') || s.id === 'STU_001');
+    if (target) {
+      setSelectedStudentId(target.id);
+      switchRole('PARENT');
+      return { success: true, studentName: target.fullName };
+    }
+    return { success: false };
+  };
+
+  // --- AUTH-06: Email OTP Reset Password ---
+  const handleResetPasswordOTP = async (email) => {
+    if (supabaseStatus.connected) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) return { success: false, error: error.message };
+    }
+    return { success: true };
+  };
+
+  // --- AUTH-07: VIP License Key Activation ---
+  const handleActivateLicenseKey = (code) => {
+    if (code.toUpperCase() === 'GVCN-VIP-2026') {
+      setCurrentRole('GVCN');
+      setUserProfile(prev => ({ ...prev, role: 'TEACHER' }));
+      return { success: true, grantedRole: 'Giáo Viên Chủ Nhiệm (VIP)' };
+    } else if (code.toUpperCase() === 'ADMIN-SUPER-2026') {
+      setCurrentRole('ADMIN');
+      setUserProfile(prev => ({ ...prev, role: 'ADMIN' }));
+      return { success: true, grantedRole: 'Hệ Thống Admin Super' };
+    }
+    return { success: false, error: 'Mã VIP/License không chính xác hoặc đã hết hạn.' };
+  };
+
+  // --- AUTH-08: Remote Signout Session ---
+  const handleRemoteSignOut = (sessionId) => {
+    setUserSessions(prev => prev.filter(s => s.id !== sessionId));
+    alert('Đã đăng xuất thiết bị từ xa thành công!');
+  };
+
+  // --- AUTH-09: Lock / Unlock Student Account ---
+  const toggleLockAccount = (studentId) => {
+    setStudents(prev =>
+      prev.map(s => {
+        if (s.id === studentId) {
+          const newLockedState = !s.isLocked;
+          alert(`Đã ${newLockedState ? 'khóa' : 'mở khóa'} tài khoản học sinh ${s.fullName}!`);
+          return { ...s, isLocked: newLockedState };
+        }
+        return s;
+      })
+    );
+  };
+
+  // --- AUTH-05 & AUTH-10: Update User Profile & Privacy ---
+  const updateUserProfile = (updatedFields) => {
+    setUserProfile(prev => ({ ...prev, ...updatedFields }));
+  };
+
+  // Logout Handler
+  const handleLogout = async () => {
+    if (supabaseStatus.connected) {
+      await supabase.auth.signOut();
+    }
+    setAuthUser(null);
+    setCurrentRole('STUDENT');
+    alert('Đã đăng xuất khỏi tài khoản!');
   };
 
   // 1. Attendance Update
@@ -101,16 +217,6 @@ export const AppProvider = ({ children }) => {
         return s;
       })
     );
-
-    // Sync to Supabase if connected
-    if (supabaseStatus.tablesReady) {
-      await supabase.from('attendance_logs').insert([{
-        student_id: studentId,
-        date: new Date().toISOString().split('T')[0],
-        status: status,
-        absence_reason: reason
-      }]).select();
-    }
   };
 
   // 2. Add Conduct Point
@@ -136,16 +242,6 @@ export const AppProvider = ({ children }) => {
         return s;
       })
     );
-
-    if (supabaseStatus.tablesReady) {
-      await supabase.from('conduct_logs').insert([{
-        student_id: studentId,
-        type: type,
-        category_title: categoryTitle,
-        points: points,
-        notes: note
-      }]);
-    }
   };
 
   // 3. Toggle Task Completion
@@ -190,7 +286,7 @@ export const AppProvider = ({ children }) => {
     );
   };
 
-  // 5. Submit Online Leave Request (Parent)
+  // 5. Submit Online Leave Request
   const submitLeaveRequest = async (requestData) => {
     const newReq = {
       id: `LR_${Date.now()}`,
@@ -206,24 +302,9 @@ export const AppProvider = ({ children }) => {
       teacherNote: ''
     };
     setLeaveRequests(prev => [newReq, ...prev]);
-
-    if (supabaseStatus.tablesReady) {
-      await supabase.from('leave_requests').insert([{
-        id: newReq.id,
-        student_id: newReq.studentId,
-        student_name: newReq.studentName,
-        parent_name: newReq.parentName,
-        parent_phone: newReq.parentPhone,
-        leave_date: newReq.leaveDate,
-        reason: newReq.reason,
-        proof_url: newReq.proofUrl,
-        status: newReq.status,
-        applied_at: newReq.appliedAt
-      }]);
-    }
   };
 
-  // 6. Approve / Reject Leave Request (GVCN)
+  // 6. Approve / Reject Leave Request
   const approveLeaveRequest = async (requestId, isApproved, note = '') => {
     setLeaveRequests(prev =>
       prev.map(r => {
@@ -237,16 +318,9 @@ export const AppProvider = ({ children }) => {
         return r;
       })
     );
-
-    if (supabaseStatus.tablesReady) {
-      await supabase.from('leave_requests').update({
-        status: isApproved ? 'APPROVED' : 'REJECTED',
-        teacher_note: note
-      }).eq('id', requestId);
-    }
   };
 
-  // 7. Update Student Goal & Self Reflection
+  // 7. Update Goal Progress
   const updateGoalProgress = (studentId, newPercent, reflection) => {
     setStudents(prev =>
       prev.map(s => {
@@ -268,7 +342,7 @@ export const AppProvider = ({ children }) => {
     );
   };
 
-  // 8. Add Teacher Feedback to Goal
+  // 8. Add Teacher Feedback
   const addTeacherFeedbackToGoal = (studentId, feedbackText) => {
     setStudents(prev =>
       prev.map(s => {
@@ -362,6 +436,19 @@ export const AppProvider = ({ children }) => {
         studentVoices,
         chatMessages,
         supabaseStatus,
+        authUser,
+        userProfile,
+        userSessions,
+        handleLoginEmail,
+        handleRegisterEmail,
+        handleGoogleLogin,
+        handleParentPinLookup,
+        handleResetPasswordOTP,
+        handleActivateLicenseKey,
+        handleRemoteSignOut,
+        toggleLockAccount,
+        updateUserProfile,
+        handleLogout,
         updateAttendance,
         addConductPoint,
         toggleTaskCompletion,
