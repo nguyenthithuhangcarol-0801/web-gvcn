@@ -108,9 +108,13 @@ const MainContent = () => {
 };
 
 const AppContainer = () => {
+  const { authUser } = useApp();
   const [hasEnteredApp, setHasEnteredApp] = useState(false);
 
-  if (!hasEnteredApp) {
+  // Nếu đã đăng nhập (authUser) HOẶC bấm vào dùng thử -> Vào ngay giao diện chính
+  const showMainApp = !!authUser || hasEnteredApp;
+
+  if (!showMainApp) {
     return <LandingLoginPortal onEnterApp={() => setHasEnteredApp(true)} />;
   }
 

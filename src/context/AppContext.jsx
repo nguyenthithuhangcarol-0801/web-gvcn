@@ -85,6 +85,10 @@ export const AppProvider = ({ children }) => {
   // Role Switcher Handler
   const switchRole = (newRole) => {
     setCurrentRole(newRole);
+    try {
+      localStorage.setItem('web_gvcn_user_role', newRole);
+    } catch (e) {}
+
     if (newRole === 'PARENT') {
       setActiveTab('parent_portal');
     } else if (newRole === 'STUDENT') {
@@ -96,7 +100,7 @@ export const AppProvider = ({ children }) => {
 
   // Helper to set profile & role after login
   const applyRoleAfterAuth = (targetRole, email, name = '') => {
-    const role = targetRole || currentRole;
+    const role = targetRole || currentRole || localStorage.getItem('web_gvcn_user_role') || 'STUDENT';
     switchRole(role);
 
     const displayName = name || (email ? email.split('@')[0] : 'Người dùng');
@@ -338,6 +342,9 @@ export const AppProvider = ({ children }) => {
     if (supabaseStatus.connected) {
       await supabase.auth.signOut();
     }
+    try {
+      localStorage.removeItem('web_gvcn_user_role');
+    } catch (e) {}
     setAuthUser(null);
     setCurrentRole('STUDENT');
     alert('Đã đăng xuất khỏi tài khoản!');
