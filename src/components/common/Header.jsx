@@ -31,6 +31,14 @@ export const Header = ({ onReturnToPortal }) => {
                 <Home className="w-3 h-3 text-indigo-600" />
                 <span>Cổng Chọn Vai Trò</span>
               </button>
+              <button
+                onClick={() => setActiveTab('class_creation')}
+                className="text-[10px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1 transition-colors shadow-2xs font-mono"
+                title="Mã Join Code & QR Code Gia Nhập Lớp (CLAS-01)"
+              >
+                <span>🔑 Mã Lớp:</span>
+                <strong className="text-emerald-950 font-black">{classInfo.joinCode || 'L12A9X'}</strong>
+              </button>
             </div>
             <p className="text-xs text-slate-500 font-medium">{classInfo.schoolName} • {classInfo.gvcnName}</p>
           </div>

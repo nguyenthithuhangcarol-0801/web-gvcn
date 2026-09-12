@@ -10,7 +10,8 @@ export const INITIAL_CLASS_INFO = {
   unexcusedAbsence: 1,
   lateToday: 2,
   gvcnName: "Giáo Viên Chủ Nhiệm",
-  schoolName: "Trường THPT Phạm Phú Thứ"
+  schoolName: "Trường THPT Phạm Phú Thứ",
+  joinCode: "L12A9X"
 };
 
 export const INITIAL_STUDENTS = [

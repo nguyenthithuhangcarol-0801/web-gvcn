@@ -21,6 +21,7 @@ import { ReportsModule } from './components/modules/ReportsModule';
 import { AIAssistantModule } from './components/modules/AIAssistantModule';
 import { UserProfileModule } from './components/modules/UserProfileModule';
 import { AccountManagementModule } from './components/modules/AccountManagementModule';
+import { ClassCreationModule } from './components/modules/ClassCreationModule';
 import { LandingLoginPortal } from './components/auth/LandingLoginPortal';
 import { Settings, Shield, RefreshCw, LogOut } from 'lucide-react';
 
@@ -89,6 +90,8 @@ const MainContent = () => {
         return <ReportsModule />;
       case 'ai_assistant':
         return <AIAssistantModule />;
+      case 'class_creation':
+        return <ClassCreationModule />;
       case 'user_profile':
         return <UserProfileModule />;
       case 'account_mgmt':

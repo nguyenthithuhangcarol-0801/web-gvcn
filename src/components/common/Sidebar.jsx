@@ -42,6 +42,7 @@ export const Sidebar = () => {
     { id: 'certificates', label: 'Certificate Khen thưởng', icon: Trophy, roles: ['GVCN', 'STUDENT', 'ADMIN'] },
     { id: 'reports', label: 'Báo cáo tự động ⭐', icon: BarChart3, roles: ['GVCN', 'ADMIN'] },
     { id: 'ai_assistant', label: 'AI Assistant cho GVCN 🤖', icon: Sparkles, roles: ['GVCN', 'ADMIN'] },
+    { id: 'class_creation', label: 'Tạo Lớp & Join Code (CLAS-01)', icon: Key, roles: ['GVCN', 'STUDENT', 'PARENT', 'ADMIN'] },
     { id: 'user_profile', label: 'Profile & Bảo mật (AUTH)', icon: User, roles: ['GVCN', 'STUDENT', 'PARENT', 'ADMIN'] },
     { id: 'account_mgmt', label: 'Quản lý Account HS (AUTH-09)', icon: Shield, roles: ['GVCN', 'ADMIN'] },
     { id: 'settings', label: 'Cài đặt hệ thống', icon: Settings, roles: ['GVCN', 'ADMIN'] }

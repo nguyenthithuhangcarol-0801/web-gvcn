@@ -1,6 +1,24 @@
--- FULL SUPABASE SCHEMA & RLS MIGRATION FOR AUTH-01 TO AUTH-10
+-- FULL SUPABASE SCHEMA & RLS MIGRATION FOR AUTH & CLASS MANAGEMENT (CLAS-01)
 
--- 1. Bảng User Profiles
+-- 1. Bảng Classes (CLAS-01: Lớp học & Join Code 6 ký tự)
+CREATE TABLE IF NOT EXISTS public.classes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    class_name VARCHAR(50) NOT NULL,
+    cohort VARCHAR(50) DEFAULT 'CLASS OF 2027',
+    academic_year VARCHAR(30) DEFAULT '2026-2027',
+    school_name VARCHAR(150) DEFAULT 'THPT Phạm Phú Thứ',
+    join_code VARCHAR(6) UNIQUE NOT NULL, -- Mã Join Code 6 ký tự
+    total_students INT DEFAULT 50,
+    gvcn_id UUID REFERENCES auth.users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- Chèn sẵn lớp mẫu 12A9 với Mã Lớp: L12A9X
+INSERT INTO public.classes (class_name, cohort, academic_year, school_name, join_code, total_students)
+VALUES ('12A9', 'CLASS OF 2027', '2026-2027', 'THPT Phạm Phú Thứ', 'L12A9X', 50)
+ON CONFLICT (join_code) DO NOTHING;
+
+-- 2. Bảng User Profiles
 CREATE TABLE IF NOT EXISTS public.user_profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -18,7 +36,7 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- 2. Bảng Catalog Mã Kích Hoạt License (AUTH-07)
+-- 3. Bảng Catalog Mã Kích Hoạt License (AUTH-07)
 CREATE TABLE IF NOT EXISTS public.license_keys (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     key_code VARCHAR(50) UNIQUE NOT NULL,
@@ -28,12 +46,11 @@ CREATE TABLE IF NOT EXISTS public.license_keys (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- Chèn sẵn mã License Mẫu: GVCN-VIP-2026
 INSERT INTO public.license_keys (key_code, role_granted)
 VALUES ('GVCN-VIP-2026', 'TEACHER'), ('ADMIN-SUPER-2026', 'ADMIN')
 ON CONFLICT (key_code) DO NOTHING;
 
--- 3. Bảng Session Thiết Bị Đăng Nhập (AUTH-08)
+-- 4. Bảng Session Thiết Bị Đăng Nhập (AUTH-08)
 CREATE TABLE IF NOT EXISTS public.user_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -42,22 +59,15 @@ CREATE TABLE IF NOT EXISTS public.user_sessions (
     last_active TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- 4. Phân Quyền Row Level Security 3 Cấp (AUTH-03)
+-- 5. Phân Quyền Row Level Security (RLS)
+ALTER TABLE public.classes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.license_keys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_sessions ENABLE ROW LEVEL SECURITY;
 
--- Policies cho User Profiles
-CREATE POLICY "Admin Full Access Profiles" ON public.user_profiles
-    FOR ALL USING (auth.jwt() ->> 'role' = 'service_role' OR EXISTS (
-        SELECT 1 FROM public.user_profiles WHERE id = auth.uid() AND role = 'ADMIN'
-    ));
-
-CREATE POLICY "Users Read Own & Public Profiles" ON public.user_profiles
-    FOR SELECT USING (true);
-
-CREATE POLICY "Users Update Own Profile" ON public.user_profiles
-    FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Public Read Classes" ON public.classes FOR SELECT USING (true);
+CREATE POLICY "Users Read Own & Public Profiles" ON public.user_profiles FOR SELECT USING (true);
+CREATE POLICY "Users Update Own Profile" ON public.user_profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Trigger Tự Động Tạo Profile Khi Đăng Ký Tài Khoản Mới
 CREATE OR REPLACE FUNCTION public.handle_new_user()

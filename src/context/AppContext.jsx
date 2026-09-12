@@ -125,6 +125,45 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // --- CLAS-01: Khởi Tạo Lớp & Sinh Join Code (6 ký tự) ---
+  const createNewClass = (formData) => {
+    // Generate 6-character random uppercase Join Code
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = 'L';
+    for (let i = 0; i < 5; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    const newClassObj = {
+      className: formData.className || '12A1',
+      cohort: formData.cohort || 'CLASS OF 2027',
+      academicYear: formData.academicYear || '2026-2027',
+      schoolName: formData.schoolName || 'Trường THPT Phạm Phú Thứ',
+      totalStudents: formData.expectedStudents || 40,
+      presentToday: formData.expectedStudents || 40,
+      excusedAbsence: 0,
+      unexcusedAbsence: 0,
+      lateToday: 0,
+      gvcnName: userProfile.full_name || 'Giáo Viên Chủ Nhiệm',
+      joinCode: code
+    };
+
+    setClassInfo(newClassObj);
+    return newClassObj;
+  };
+
+  const joinClassByCode = (code) => {
+    const cleanCode = code.trim().toUpperCase();
+    if (cleanCode === classInfo.joinCode || cleanCode === 'L12A9X') {
+      return { success: true, className: classInfo.className };
+    }
+    // Allow any 6-character uppercase code to simulate joining new class
+    if (cleanCode.length === 6) {
+      return { success: true, className: `Lớp (${cleanCode})` };
+    }
+    return { success: false, error: 'Mã Lớp không tồn tại. Mã Lớp phải gồm 6 ký tự.' };
+  };
+
   // --- AUTH-01: Email/Password Login & Register ---
   const handleLoginEmail = async (email, password, role = currentRole) => {
     if (supabaseStatus.connected) {
@@ -164,7 +203,7 @@ export const AppProvider = ({ children }) => {
     return { success: true };
   };
 
-  // --- AUTH-02 / GMAIL: Google OAuth & Gmail Magic Link (Multi-Role Enabled) ---
+  // --- AUTH-02 / GMAIL: Google OAuth & Gmail Magic Link ---
   const handleGoogleLogin = async (role = currentRole) => {
     const redirectOrigin = window.location.origin;
 
@@ -595,6 +634,8 @@ export const AppProvider = ({ children }) => {
         authUser,
         userProfile,
         userSessions,
+        createNewClass,
+        joinClassByCode,
         handleLoginEmail,
         handleRegisterEmail,
         handleGoogleLogin,
