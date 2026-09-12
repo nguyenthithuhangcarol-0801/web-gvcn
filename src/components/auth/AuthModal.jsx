@@ -18,7 +18,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
   // Gmail 1-Click Login / Register Trigger
   const onGoogleOAuth = async () => {
     setLoading(true);
-    const res = await handleGoogleLogin();
+    const res = await handleGoogleLogin(currentRole);
     setLoading(false);
     if (res.success) {
       alert(res.message || 'Đăng nhập bằng tài khoản Gmail / Google thành công!');
@@ -32,7 +32,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
     if (!email.trim()) return;
     setLoading(true);
     setMessage('');
-    const res = await handleGmailMagicLink(email);
+    const res = await handleGmailMagicLink(email, currentRole);
     setLoading(false);
     if (res.success) {
       alert(res.message);

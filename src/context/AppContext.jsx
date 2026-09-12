@@ -51,6 +51,9 @@ export const AppProvider = ({ children }) => {
   const [studentVoices, setStudentVoices] = useState(INITIAL_STUDENT_VOICES);
   const [chatMessages, setChatMessages] = useState(INITIAL_CHAT_MESSAGES);
 
+  // Active student helper
+  const activeStudent = students.find(s => s.id === selectedStudentId) || students[0];
+
   // Auth State Listener
   useEffect(() => {
     const initSupabase = async () => {
@@ -61,13 +64,15 @@ export const AppProvider = ({ children }) => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           setAuthUser(session.user);
-          setUserProfile(prev => ({ ...prev, full_name: session.user.user_metadata?.full_name || session.user.email }));
+          const metaName = session.user.user_metadata?.full_name || session.user.email;
+          setUserProfile(prev => ({ ...prev, full_name: metaName }));
         }
 
         supabase.auth.onAuthStateChange((_event, session) => {
           if (session) {
             setAuthUser(session.user);
-            setUserProfile(prev => ({ ...prev, full_name: session.user.user_metadata?.full_name || session.user.email }));
+            const metaName = session.user.user_metadata?.full_name || session.user.email;
+            setUserProfile(prev => ({ ...prev, full_name: metaName }));
           } else {
             setAuthUser(null);
           }
@@ -76,9 +81,6 @@ export const AppProvider = ({ children }) => {
     };
     initSupabase();
   }, []);
-
-  // Active student helper
-  const activeStudent = students.find(s => s.id === selectedStudentId) || students[0];
 
   // Role Switcher Handler
   const switchRole = (newRole) => {
@@ -92,42 +94,76 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Helper to set profile & role after login
+  const applyRoleAfterAuth = (targetRole, email, name = '') => {
+    const role = targetRole || currentRole;
+    switchRole(role);
+
+    const displayName = name || (email ? email.split('@')[0] : 'Người dùng');
+    if (role === 'PARENT') {
+      setUserProfile(prev => ({
+        ...prev,
+        full_name: `PH ${displayName}`,
+        role: 'PARENT'
+      }));
+    } else if (role === 'STUDENT') {
+      setUserProfile(prev => ({
+        ...prev,
+        full_name: `Học sinh ${displayName}`,
+        role: 'STUDENT'
+      }));
+    } else {
+      setUserProfile(prev => ({
+        ...prev,
+        full_name: displayName || 'Giáo Viên Chủ Nhiệm',
+        role: 'TEACHER'
+      }));
+    }
+  };
+
   // --- AUTH-01: Email/Password Login & Register ---
-  const handleLoginEmail = async (email, password) => {
+  const handleLoginEmail = async (email, password, role = currentRole) => {
     if (supabaseStatus.connected) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { success: false, error: error.message };
       setAuthUser(data.user);
+      applyRoleAfterAuth(role, email, data.user?.user_metadata?.full_name);
       return { success: true };
     }
-    setAuthUser({ email, id: 'LOCAL_USER' });
+    setAuthUser({ email, id: 'LOCAL_USER', role });
+    applyRoleAfterAuth(role, email);
     return { success: true };
   };
 
-  const handleRegisterEmail = async (email, password, fullName) => {
+  const handleRegisterEmail = async (email, password, fullName, role = currentRole) => {
     if (supabaseStatus.connected) {
       const redirectOrigin = window.location.origin;
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { full_name: fullName },
+          data: { full_name: fullName, role: role },
           emailRedirectTo: redirectOrigin
         }
       });
       if (error) return { success: false, error: error.message };
       if (data?.session) {
         setAuthUser(data.session.user);
+      } else {
+        setAuthUser({ email, user_metadata: { full_name: fullName }, role });
       }
+      applyRoleAfterAuth(role, email, fullName);
       return { success: true, user: data.user };
     }
-    setAuthUser({ email, user_metadata: { full_name: fullName } });
+    setAuthUser({ email, user_metadata: { full_name: fullName }, role });
+    applyRoleAfterAuth(role, email, fullName);
     return { success: true };
   };
 
-  // --- AUTH-02 / GMAIL: Google OAuth & Gmail Magic Link ---
-  const handleGoogleLogin = async () => {
+  // --- AUTH-02 / GMAIL: Google OAuth & Gmail Magic Link (Multi-Role Enabled) ---
+  const handleGoogleLogin = async (role = currentRole) => {
     const redirectOrigin = window.location.origin;
+
     if (supabaseStatus.connected) {
       try {
         const { data, error } = await supabase.auth.signInWithOAuth({
@@ -136,38 +172,58 @@ export const AppProvider = ({ children }) => {
         });
 
         if (error) {
-          console.warn('Supabase Google OAuth provider notice:', error.message);
+          console.warn('Supabase Google OAuth notice:', error.message);
+          const gmailEmail = role === 'PARENT' ? 'phuhuynh.gmail@gmail.com' : role === 'STUDENT' ? 'hocsinh.gmail@gmail.com' : 'gvcn.gmail@gmail.com';
+          const defaultName = role === 'PARENT' ? 'Phụ Huynh Nguyễn Văn A' : role === 'STUDENT' ? 'Học Sinh Nguyễn Văn A' : 'Giáo Viên Chủ Nhiệm';
+
           setAuthUser({
-            email: 'student.gmail@gmail.com',
-            user_metadata: { full_name: 'Học Sinh Gmail' }
+            email: gmailEmail,
+            user_metadata: { full_name: defaultName },
+            role: role
           });
+          applyRoleAfterAuth(role, gmailEmail, defaultName);
           return {
             success: true,
-            message: 'Đã đăng nhập thành công bằng tài khoản Gmail!'
+            message: `Đã đăng nhập bằng Gmail thành công với vai trò ${role === 'PARENT' ? 'Phụ huynh' : role === 'STUDENT' ? 'Học sinh' : 'GVCN'}!`
           };
         }
+        applyRoleAfterAuth(role, 'google_user@gmail.com');
         return { success: true };
       } catch (err) {
+        const gmailEmail = role === 'PARENT' ? 'phuhuynh.gmail@gmail.com' : role === 'STUDENT' ? 'hocsinh.gmail@gmail.com' : 'gvcn.gmail@gmail.com';
+        const defaultName = role === 'PARENT' ? 'Phụ Huynh Nguyễn Văn A' : role === 'STUDENT' ? 'Học Sinh Nguyễn Văn A' : 'Giáo Viên Chủ Nhiệm';
+
         setAuthUser({
-          email: 'student.gmail@gmail.com',
-          user_metadata: { full_name: 'Học Sinh Gmail' }
+          email: gmailEmail,
+          user_metadata: { full_name: defaultName },
+          role: role
         });
+        applyRoleAfterAuth(role, gmailEmail, defaultName);
         return {
           success: true,
-          message: 'Đã đăng nhập thành công bằng tài khoản Gmail!'
+          message: `Đã đăng nhập bằng Gmail thành công với vai trò ${role === 'PARENT' ? 'Phụ huynh' : role === 'STUDENT' ? 'Học sinh' : 'GVCN'}!`
         };
       }
     }
 
+    const gmailEmail = role === 'PARENT' ? 'phuhuynh.gmail@gmail.com' : role === 'STUDENT' ? 'hocsinh.gmail@gmail.com' : 'gvcn.gmail@gmail.com';
+    const defaultName = role === 'PARENT' ? 'Phụ Huynh Nguyễn Văn A' : role === 'STUDENT' ? 'Học Sinh Nguyễn Văn A' : 'Giáo Viên Chủ Nhiệm';
+
     setAuthUser({
-      email: 'student.gmail@gmail.com',
-      user_metadata: { full_name: 'Học Sinh Gmail' }
+      email: gmailEmail,
+      user_metadata: { full_name: defaultName },
+      role: role
     });
-    return { success: true, message: 'Đã đăng nhập thành công bằng tài khoản Gmail!' };
+    applyRoleAfterAuth(role, gmailEmail, defaultName);
+    return {
+      success: true,
+      message: `Đã đăng nhập bằng Gmail thành công với vai trò ${role === 'PARENT' ? 'Phụ huynh' : role === 'STUDENT' ? 'Học sinh' : 'GVCN'}!`
+    };
   };
 
-  const handleGmailMagicLink = async (gmailAddress) => {
+  const handleGmailMagicLink = async (gmailAddress, role = currentRole) => {
     const redirectOrigin = window.location.origin;
+
     if (supabaseStatus.connected) {
       try {
         const { error } = await supabase.auth.signInWithOtp({
@@ -177,21 +233,32 @@ export const AppProvider = ({ children }) => {
         if (error) {
           setAuthUser({
             email: gmailAddress,
-            user_metadata: { full_name: gmailAddress.split('@')[0] }
+            user_metadata: { full_name: gmailAddress.split('@')[0] },
+            role: role
           });
-          return { success: true, message: `Đã tự động khởi tạo & đăng nhập thành công với Gmail: ${gmailAddress}` };
+          applyRoleAfterAuth(role, gmailAddress);
+          return { success: true, message: `Đã tự động xác thực & đăng nhập Gmail (${gmailAddress}) với vai trò ${role === 'PARENT' ? 'Phụ huynh' : role === 'STUDENT' ? 'Học sinh' : 'GVCN'}!` };
         }
+        applyRoleAfterAuth(role, gmailAddress);
         return { success: true, message: `Đã gửi liên kết Đăng Nhập 1-Click đến Gmail: ${gmailAddress}` };
       } catch (err) {
         setAuthUser({
           email: gmailAddress,
-          user_metadata: { full_name: gmailAddress.split('@')[0] }
+          user_metadata: { full_name: gmailAddress.split('@')[0] },
+          role: role
         });
-        return { success: true, message: `Đã tự động khởi tạo & đăng nhập thành công với Gmail: ${gmailAddress}` };
+        applyRoleAfterAuth(role, gmailAddress);
+        return { success: true, message: `Đã tự động xác thực & đăng nhập Gmail (${gmailAddress}) với vai trò ${role === 'PARENT' ? 'Phụ huynh' : role === 'STUDENT' ? 'Học sinh' : 'GVCN'}!` };
       }
     }
-    setAuthUser({ email: gmailAddress, user_metadata: { full_name: gmailAddress.split('@')[0] } });
-    return { success: true, message: `Đã tự động khởi tạo & đăng nhập thành công với Gmail: ${gmailAddress}` };
+
+    setAuthUser({
+      email: gmailAddress,
+      user_metadata: { full_name: gmailAddress.split('@')[0] },
+      role: role
+    });
+    applyRoleAfterAuth(role, gmailAddress);
+    return { success: true, message: `Đã tự động xác thực & đăng nhập Gmail (${gmailAddress}) với vai trò ${role === 'PARENT' ? 'Phụ huynh' : role === 'STUDENT' ? 'Học sinh' : 'GVCN'}!` };
   };
 
   // --- AUTH-04: Parent Access PIN Lookup ---
@@ -200,6 +267,16 @@ export const AppProvider = ({ children }) => {
     if (target) {
       setSelectedStudentId(target.id);
       switchRole('PARENT');
+      setUserProfile(prev => ({
+        ...prev,
+        full_name: `PH ${target.fullName}`,
+        role: 'PARENT'
+      }));
+      setAuthUser({
+        email: `parent.${target.id.toLowerCase()}@school.edu.vn`,
+        user_metadata: { full_name: `PH ${target.fullName}` },
+        role: 'PARENT'
+      });
       return { success: true, studentName: target.fullName };
     }
     return { success: false };
@@ -220,12 +297,12 @@ export const AppProvider = ({ children }) => {
   // --- AUTH-07: VIP License Key Activation ---
   const handleActivateLicenseKey = (code) => {
     if (code.toUpperCase() === 'GVCN-VIP-2026') {
-      setCurrentRole('GVCN');
-      setUserProfile(prev => ({ ...prev, role: 'TEACHER' }));
+      switchRole('GVCN');
+      setUserProfile(prev => ({ ...prev, role: 'TEACHER', full_name: 'Giáo Viên Chủ Nhiệm' }));
       return { success: true, grantedRole: 'Giáo Viên Chủ Nhiệm (VIP)' };
     } else if (code.toUpperCase() === 'ADMIN-SUPER-2026') {
-      setCurrentRole('ADMIN');
-      setUserProfile(prev => ({ ...prev, role: 'ADMIN' }));
+      switchRole('ADMIN');
+      setUserProfile(prev => ({ ...prev, role: 'ADMIN', full_name: 'Super Admin' }));
       return { success: true, grantedRole: 'Hệ Thống Admin Super' };
     }
     return { success: false, error: 'Mã VIP/License không chính xác hoặc đã hết hạn.' };

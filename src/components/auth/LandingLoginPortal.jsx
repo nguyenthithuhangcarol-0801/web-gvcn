@@ -53,7 +53,7 @@ export const LandingLoginPortal = ({ onEnterApp }) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
-    const res = await handleLoginEmail(email, password);
+    const res = await handleLoginEmail(email, password, selectedRole);
     setLoading(false);
     if (res.success) {
       onEnterApp();
@@ -66,7 +66,7 @@ export const LandingLoginPortal = ({ onEnterApp }) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
-    const res = await handleRegisterEmail(email, password, fullName);
+    const res = await handleRegisterEmail(email, password, fullName, selectedRole);
     setLoading(false);
     if (res.success) {
       alert('Đăng ký tài khoản thành công!');
@@ -78,7 +78,7 @@ export const LandingLoginPortal = ({ onEnterApp }) => {
 
   const onGoogleOAuth = async () => {
     setLoading(true);
-    const res = await handleGoogleLogin();
+    const res = await handleGoogleLogin(selectedRole);
     setLoading(false);
     if (res.success) {
       onEnterApp();
@@ -90,7 +90,7 @@ export const LandingLoginPortal = ({ onEnterApp }) => {
     if (!email.trim()) return;
     setLoading(true);
     setMessage('');
-    const res = await handleGmailMagicLink(email);
+    const res = await handleGmailMagicLink(email, selectedRole);
     setLoading(false);
     if (res.success) {
       onEnterApp();
