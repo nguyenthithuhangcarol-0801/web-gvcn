@@ -111,10 +111,20 @@ const MainContent = () => {
 };
 
 const AppContainer = () => {
-  const { authUser } = useApp();
+  const { authUser, isAuthChecking } = useApp();
   const [hasEnteredApp, setHasEnteredApp] = useState(false);
 
-  // Nếu đã đăng nhập (authUser) HOẶC bấm vào dùng thử -> Vào ngay giao diện chính
+  // Hiển thị màn hình chờ mượt mà trong lúc Supabase kiểm tra phiên đăng nhập
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4 space-y-4">
+        <RefreshCw className="w-8 h-8 text-indigo-400 animate-spin" />
+        <p className="text-xs font-bold text-slate-300">Đang xác thực tài khoản &amp; kết nối hệ thống...</p>
+      </div>
+    );
+  }
+
+  // Nếu đã đăng nhập (authUser) HOẶC bấm vào xem ngay -> Đưa vào giao diện chính tương ứng
   const showMainApp = !!authUser || hasEnteredApp;
 
   if (!showMainApp) {
