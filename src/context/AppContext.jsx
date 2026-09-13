@@ -18,13 +18,34 @@ import {
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [currentRole, setCurrentRole] = useState('GVCN'); // 'GVCN' | 'STUDENT' | 'PARENT' | 'ADMIN'
+  const [currentRole, setCurrentRole] = useState(() => {
+    try {
+      return localStorage.getItem('web_gvcn_user_role') || 'GVCN';
+    } catch (e) {
+      return 'GVCN';
+    }
+  });
+
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedStudentId, setSelectedStudentId] = useState('STU_001');
 
   const [supabaseStatus, setSupabaseStatus] = useState({ connected: false, tablesReady: false });
   const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [authUser, setAuthUser] = useState(null);
+
+  // Initialize authUser if user is logged in
+  const [authUser, setAuthUser] = useState(() => {
+    try {
+      const isLogged = localStorage.getItem('web_gvcn_user_logged_in');
+      const savedRole = localStorage.getItem('web_gvcn_user_role') || 'STUDENT';
+      if (isLogged === 'true') {
+        const email = savedRole === 'PARENT' ? 'phuhuynh.gmail@gmail.com' : savedRole === 'STUDENT' ? 'hocsinh.gmail@gmail.com' : 'gvcn.gmail@gmail.com';
+        const name = savedRole === 'PARENT' ? 'PH Nguyễn Văn A' : savedRole === 'STUDENT' ? 'Học Sinh Nguyễn Văn A' : 'Giáo Viên Chủ Nhiệm';
+        return { email, role: savedRole, user_metadata: { full_name: name } };
+      }
+    } catch (e) {}
+    return null;
+  });
+
   const [userProfile, setUserProfile] = useState({
     full_name: 'Giáo Viên Chủ Nhiệm',
     phone_number: '0987654321',
@@ -67,16 +88,20 @@ export const AppProvider = ({ children }) => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           setAuthUser(session.user);
+          try {
+            localStorage.setItem('web_gvcn_user_logged_in', 'true');
+          } catch (e) {}
           applyRoleAfterAuth(savedRole, session.user.email, session.user.user_metadata?.full_name);
         }
 
         supabase.auth.onAuthStateChange((_event, session) => {
           if (session) {
             setAuthUser(session.user);
+            try {
+              localStorage.setItem('web_gvcn_user_logged_in', 'true');
+            } catch (e) {}
             const currentSavedRole = localStorage.getItem('web_gvcn_user_role') || 'STUDENT';
             applyRoleAfterAuth(currentSavedRole, session.user.email, session.user.user_metadata?.full_name);
-          } else {
-            setAuthUser(null);
           }
         });
       }
@@ -104,6 +129,12 @@ export const AppProvider = ({ children }) => {
   // Helper to set profile & role after login
   const applyRoleAfterAuth = (targetRole, email, name = '') => {
     const role = targetRole || currentRole || localStorage.getItem('web_gvcn_user_role') || 'STUDENT';
+
+    try {
+      localStorage.setItem('web_gvcn_user_logged_in', 'true');
+      localStorage.setItem('web_gvcn_user_role', role);
+    } catch (e) {}
+
     switchRole(role);
 
     const displayName = name || (email ? email.split('@')[0] : 'Người dùng');
@@ -169,6 +200,7 @@ export const AppProvider = ({ children }) => {
   const handleLoginEmail = async (email, password, role = currentRole) => {
     try {
       localStorage.setItem('web_gvcn_user_role', role);
+      localStorage.setItem('web_gvcn_user_logged_in', 'true');
     } catch (e) {}
 
     if (supabaseStatus.connected) {
@@ -186,6 +218,7 @@ export const AppProvider = ({ children }) => {
   const handleRegisterEmail = async (email, password, fullName, role = currentRole) => {
     try {
       localStorage.setItem('web_gvcn_user_role', role);
+      localStorage.setItem('web_gvcn_user_logged_in', 'true');
     } catch (e) {}
 
     if (supabaseStatus.connected) {
@@ -219,7 +252,11 @@ export const AppProvider = ({ children }) => {
 
     try {
       localStorage.setItem('web_gvcn_user_role', targetRole);
+      localStorage.setItem('web_gvcn_user_logged_in', 'true');
     } catch (e) {}
+
+    const gmailEmail = targetRole === 'PARENT' ? 'phuhuynh.gmail@gmail.com' : targetRole === 'STUDENT' ? 'hocsinh.gmail@gmail.com' : 'gvcn.gmail@gmail.com';
+    const defaultName = targetRole === 'PARENT' ? 'Phụ Huynh Nguyễn Văn A' : targetRole === 'STUDENT' ? 'Học Sinh Nguyễn Văn A' : 'Giáo Viên Chủ Nhiệm';
 
     if (supabaseStatus.connected) {
       try {
@@ -230,9 +267,6 @@ export const AppProvider = ({ children }) => {
 
         if (error) {
           console.warn('Supabase Google OAuth notice:', error.message);
-          const gmailEmail = targetRole === 'PARENT' ? 'phuhuynh.gmail@gmail.com' : targetRole === 'STUDENT' ? 'hocsinh.gmail@gmail.com' : 'gvcn.gmail@gmail.com';
-          const defaultName = targetRole === 'PARENT' ? 'Phụ Huynh Nguyễn Văn A' : targetRole === 'STUDENT' ? 'Học Sinh Nguyễn Văn A' : 'Giáo Viên Chủ Nhiệm';
-
           setAuthUser({
             email: gmailEmail,
             user_metadata: { full_name: defaultName },
@@ -247,9 +281,6 @@ export const AppProvider = ({ children }) => {
         applyRoleAfterAuth(targetRole, 'google_user@gmail.com');
         return { success: true };
       } catch (err) {
-        const gmailEmail = targetRole === 'PARENT' ? 'phuhuynh.gmail@gmail.com' : targetRole === 'STUDENT' ? 'hocsinh.gmail@gmail.com' : 'gvcn.gmail@gmail.com';
-        const defaultName = targetRole === 'PARENT' ? 'Phụ Huynh Nguyễn Văn A' : targetRole === 'STUDENT' ? 'Học Sinh Nguyễn Văn A' : 'Giáo Viên Chủ Nhiệm';
-
         setAuthUser({
           email: gmailEmail,
           user_metadata: { full_name: defaultName },
@@ -262,9 +293,6 @@ export const AppProvider = ({ children }) => {
         };
       }
     }
-
-    const gmailEmail = targetRole === 'PARENT' ? 'phuhuynh.gmail@gmail.com' : targetRole === 'STUDENT' ? 'hocsinh.gmail@gmail.com' : 'gvcn.gmail@gmail.com';
-    const defaultName = targetRole === 'PARENT' ? 'Phụ Huynh Nguyễn Văn A' : targetRole === 'STUDENT' ? 'Học Sinh Nguyễn Văn A' : 'Giáo Viên Chủ Nhiệm';
 
     setAuthUser({
       email: gmailEmail,
@@ -284,6 +312,7 @@ export const AppProvider = ({ children }) => {
 
     try {
       localStorage.setItem('web_gvcn_user_role', targetRole);
+      localStorage.setItem('web_gvcn_user_logged_in', 'true');
     } catch (e) {}
 
     if (supabaseStatus.connected) {
@@ -330,6 +359,7 @@ export const AppProvider = ({ children }) => {
       setSelectedStudentId(target.id);
       try {
         localStorage.setItem('web_gvcn_user_role', 'PARENT');
+        localStorage.setItem('web_gvcn_user_logged_in', 'true');
       } catch (e) {}
       switchRole('PARENT');
       setUserProfile(prev => ({
@@ -364,6 +394,7 @@ export const AppProvider = ({ children }) => {
     if (code.toUpperCase() === 'GVCN-VIP-2026') {
       try {
         localStorage.setItem('web_gvcn_user_role', 'GVCN');
+        localStorage.setItem('web_gvcn_user_logged_in', 'true');
       } catch (e) {}
       switchRole('GVCN');
       setUserProfile(prev => ({ ...prev, role: 'TEACHER', full_name: 'Giáo Viên Chủ Nhiệm' }));
@@ -371,6 +402,7 @@ export const AppProvider = ({ children }) => {
     } else if (code.toUpperCase() === 'ADMIN-SUPER-2026') {
       try {
         localStorage.setItem('web_gvcn_user_role', 'ADMIN');
+        localStorage.setItem('web_gvcn_user_logged_in', 'true');
       } catch (e) {}
       switchRole('ADMIN');
       setUserProfile(prev => ({ ...prev, role: 'ADMIN', full_name: 'Super Admin' }));
@@ -410,6 +442,7 @@ export const AppProvider = ({ children }) => {
       await supabase.auth.signOut();
     }
     try {
+      localStorage.removeItem('web_gvcn_user_logged_in');
       localStorage.removeItem('web_gvcn_user_role');
     } catch (e) {}
     setAuthUser(null);
