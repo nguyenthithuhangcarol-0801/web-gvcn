@@ -29,6 +29,10 @@ export const AppProvider = ({ children }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedStudentId, setSelectedStudentId] = useState('STU_001');
 
+  // "Xem thử giao diện với tư cách Học sinh / Phụ huynh" Mode State
+  const [isViewAsMode, setIsViewAsMode] = useState(false);
+  const [viewAsRole, setViewAsRole] = useState(null); // 'STUDENT' | 'PARENT'
+
   const [supabaseStatus, setSupabaseStatus] = useState({ connected: false, tablesReady: false });
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
@@ -124,6 +128,20 @@ export const AppProvider = ({ children }) => {
     } else {
       setActiveTab('dashboard');
     }
+  };
+
+  // --- Feature: Xem trang với tư cách Học sinh hoặc Phụ huynh ---
+  const startViewAsMode = (targetRole, studentId = selectedStudentId) => {
+    setIsViewAsMode(true);
+    setViewAsRole(targetRole);
+    if (studentId) setSelectedStudentId(studentId);
+    switchRole(targetRole);
+  };
+
+  const exitViewAsMode = () => {
+    setIsViewAsMode(false);
+    setViewAsRole(null);
+    switchRole('GVCN');
   };
 
   // Helper to set profile & role after login
@@ -445,6 +463,8 @@ export const AppProvider = ({ children }) => {
       localStorage.removeItem('web_gvcn_user_logged_in');
       localStorage.removeItem('web_gvcn_user_role');
     } catch (e) {}
+    setIsViewAsMode(false);
+    setViewAsRole(null);
     setAuthUser(null);
     setCurrentRole('STUDENT');
     alert('Đã đăng xuất khỏi tài khoản!');
@@ -696,6 +716,10 @@ export const AppProvider = ({ children }) => {
         authUser,
         userProfile,
         userSessions,
+        isViewAsMode,
+        viewAsRole,
+        startViewAsMode,
+        exitViewAsMode,
         createNewClass,
         joinClassByCode,
         handleLoginEmail,

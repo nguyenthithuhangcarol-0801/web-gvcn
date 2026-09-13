@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const DashboardModule = () => {
-  const { classInfo, students, tasks, announcements, setActiveTab } = useApp();
+  const { classInfo, students, tasks, announcements, setActiveTab, startViewAsMode } = useApp();
 
   const atRiskStudents = students.filter(s => s.atRisk);
   const unconfirmedAnnouncements = announcements.filter(a => a.pendingCount > 0);
@@ -54,6 +54,18 @@ export const DashboardModule = () => {
             >
               <BellRing className="w-4 h-4" />
               <span>Đăng thông báo</span>
+            </button>
+            <button
+              onClick={() => startViewAsMode('STUDENT')}
+              className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 font-bold text-xs px-3.5 py-2.5 rounded-xl transition-all border border-emerald-400/40 backdrop-blur-xs flex items-center gap-1.5"
+            >
+              <span>👁️ Xem thử HS</span>
+            </button>
+            <button
+              onClick={() => startViewAsMode('PARENT')}
+              className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-bold text-xs px-3.5 py-2.5 rounded-xl transition-all border border-amber-400/40 backdrop-blur-xs flex items-center gap-1.5"
+            >
+              <span>👁️ Xem thử PH</span>
             </button>
           </div>
         </div>
